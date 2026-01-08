@@ -3,6 +3,9 @@ import { addNewSiteTimeSpent, getStoredTimeSpentData, getStoredTempData, setStor
 import { getMainDomain } from "./utils/url.js";
 
 import type { TimeSpentData } from "./types.js";
+//TODO: Adicionar verificação para quando a extensão For iniciada pois preciso armazenar o tempo gasto no site anterior mesmo que a troca de abas não tenha ocorrido
+//TODO: Não depender exclusivamente do onActivated, pois o usuario pode fechar o navegador ou a aba sem ativar outra aba necessariamente
+//TODO: Não necessariamente a troca de aba significa que o usuario mudou de site, ele pode ter trocado para uma aba que já estava aberta no mesmo site (Eu esqueço disso as vezes)
 
 // Listener para quando a aba ativa mudar
 chrome.tabs.onActivated.addListener(async (activeInfo) => {

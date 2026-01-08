@@ -72,9 +72,12 @@ export async function addNewSiteTimeSpent(arrObj: TimeSpentData[], params: TimeS
         console.log("Site já existe no array, não adicionando novamente.");
         lastActiveSite.timeSpent += (new Date().getTime() - timeSpentOnWebsites);
     } else {
+        console.log("Site não existe no array, adicionando novo site.");
+        params.timeSpent += (new Date().getTime() - timeSpentOnWebsites);
         arrObj.push(params);
 
     }
+    console.log("arrObj após adicionar/atualizar site:", arrObj);
 
     chrome.storage.local.set({ [dataName]: arrObj });
 }
