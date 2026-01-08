@@ -22,16 +22,17 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     const tabUrl = getMainDomain(tab.url) ?? "Url Indefinida";
     // Extrair o ícone da aba
     const icon = tab.favIconUrl;
-    // Criar o objeto de dados do site
-    const dataSite:TimeSpentData = { site: { url: tabUrl, icon: icon }, timeSpent: 0, tabId: activeInfo.tabId };
+    // Criar o objeto de dados do site Atual 
+    const currentWebsiteData: TimeSpentData = { site: { url: tabUrl, icon: icon }, timeSpent: 0, tabId: activeInfo.tabId };
+    // Adicionar o novo site ao array de sites ou atualiza o tempo gasto caso ja exista
     // TODO: Está função tem duas responsabilidades, adicionar tempo ao site anterior e adicionar um novo site. Refatorar.
-    await addNewSiteTimeSpent(SitesWhereSpentTime, dataSite, lastActiveUrl, timeSpentOnWebsites);
-
-    setStoredTempData({
-        lastActiveUrl: tabUrl,
-        lastActiveSiteTabId: activeInfo.tabId,
-        timeSpentOnWebsites: new Date().getTime()
-    });
+    await addNewSiteTimeSpent(SitesWhereSpentTime, currentWebsiteData, lastActiveUrl, timeSpentOnWebsites);
+    // Armazenar os dados temporarios atualizados
+    await setStoredTempData(
+        tabUrl,
+        activeInfo.tabId,
+        new Date().getTime()
+    );
 
 });
 
