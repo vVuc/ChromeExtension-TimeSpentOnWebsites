@@ -3,10 +3,12 @@ import { addNewSiteTimeSpent, getStoredTimeSpentData, getStoredTempData, setStor
 import { getMainDomain } from "./utils/url.js";
 
 import type { TimeSpentData } from "./types.js";
+import { getCurrentFocusTab } from "./tabs.js";
 //TODO: Adicionar verificação para quando a extensão For iniciada pois preciso armazenar o tempo gasto no site anterior mesmo que a troca de abas não tenha ocorrido
 //TODO: Não depender exclusivamente do onActivated, pois o usuario pode fechar o navegador ou a aba sem ativar outra aba necessariamente
-//TODO: Não necessariamente a troca de aba significa que o usuario mudou de site, ele pode ter trocado para uma aba que já estava aberta no mesmo site (Eu esqueço disso as vezes)
+//TODO: Não necessariamente a troca de aba significa que o usuario mudou de site, ele pode ter trocado para uma aba que já estava aberta no mesmo site (Eu esqueço disso as vezes o__ô)
 
+//TODO: Verificar comportamente dos logs sempre que o lister é ativo os logs são duplicados
 // Listener para quando a aba ativa mudar
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
     // Recuperar os sites com tempo gasto armazenados
@@ -36,7 +38,41 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
         activeInfo.tabId,
         new Date().getTime()
     );
+});
+let debugCount = 0;
+//TODO: Qual sera melhor para a experiência do usuario? onCommitted ou onDOMContentLoaded?
+// Listener para quando a navegação ocorrer em uma aba (quando o usuario muda de site na mesma aba)
+chrome.webNavigation.onDOMContentLoaded.addListener(async (details) => {
+    if (details.frameId !== 0) return;
+    let tab = await getCurrentFocusTab();
+    if (!tab) return;
+    if (tab.id !== details.tabId) return;
+    // Recuperar dados temporarios armazenados 
+    const SitesWhereSpentTime: TimeSpentData[] = await getStoredTimeSpentData();
 
+    const { lastActiveUrl, lastActiveSiteTabId, timeSpentOnWebsites } = await getStoredTempData();
+    // Extrair o dominio principal da URL da aba
+    if (!tab.url || !tab.favIconUrl) {
+        console.log("A pagina não carregou os dados basicos");
+        return
+    }
+
+
+    const tabUrl = getMainDomain(tab.url) ?? "Url Indefinida";
+    // Extrair o ícone da aba
+    const icon = tab.favIconUrl;
+
+    const currentWebsiteData: TimeSpentData = { site: { url: tabUrl, icon: icon }, timeSpent: 0, tabId: details.tabId };
+
+    await addNewSiteTimeSpent(SitesWhereSpentTime, currentWebsiteData, lastActiveUrl, timeSpentOnWebsites);
+    // Armazenar os dados temporarios atualizados
+    await setStoredTempData(
+        tabUrl,
+        details.tabId,
+        new Date().getTime()
+    );
+    debugCount++;
+    console.log(`onDOMContentLoaded chamado ${debugCount} vezes`);
 });
 
 // chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {

@@ -58,27 +58,32 @@ export async function setStoredTempData(lastActiveUrl: string, lastActiveSiteTab
 /**
  * Adiciona um novo site ao array de sites com tempo gasto
  * @param arrObj Array de objetos TimeSpentData
- * @param params Novo site (objeto TimeSpentData) a ser adicionado ou atualizado caso ja exista
+ * @param currentWebSite Novo site (objeto TimeSpentData) a ser adicionado ou atualizado caso ja exista
  * @param lastActiveUrl URL do ultimo site ativo
  * @param timeSpentOnWebsites timestamp que guarda o momento no tempo em unix em que o usuario mudou de site pela ultima vez
  */
-export async function addNewSiteTimeSpent(arrObj: TimeSpentData[], params: TimeSpentData, lastActiveUrl: string, timeSpentOnWebsites: number) {
+export async function addNewSiteTimeSpent(arrObj: TimeSpentData[], currentWebSite: TimeSpentData, lastActiveUrl: string, timeSpentOnWebsites: number) {
     //Fazer um filter para não adicionar sites repetidos
     //Neste trecho eu verifico se o site já existe no array
     // const existingSite = arrObj.find(obj => tab.id && obj.tabId === tab.id);
     const lastActiveSite = arrObj.find(obj => obj.site.url === lastActiveUrl);
+    const currentWebSiteIsResgiter = arrObj.find(obj => obj.site.url === currentWebSite.site.url);
+    const timeSpent = (new Date().getTime() - timeSpentOnWebsites);
+
+    if (!currentWebSiteIsResgiter) {
+        arrObj.push(currentWebSite);
+    }
 
     if (lastActiveSite) {
         console.log("Site já existe no array, não adicionando novamente.");
+
         lastActiveSite.timeSpent += (new Date().getTime() - timeSpentOnWebsites);
     } else {
-        console.log("Site não existe no array, adicionando novo site.");
-        params.timeSpent += (new Date().getTime() - timeSpentOnWebsites);
-        arrObj.push(params);
-
+        console.error("Site não existe no array.");
     }
+    
+    console.log(`Site: ${lastActiveUrl} - Adicionando tempo gasto: ${timeSpent / 1000} segundos`);
     console.log("arrObj após adicionar/atualizar site:", arrObj);
-
     chrome.storage.local.set({ [dataName]: arrObj });
 }
 /** 
@@ -91,7 +96,5 @@ export async function getStoredTimeSpentData(): Promise<TimeSpentData[]> {
         await chrome.storage.local.set({ [dataName]: [] });
         return [];
     }
-    console.log(data);
-
     return data[dataName] || [];
 }
